@@ -1,3 +1,6 @@
+// Kazu's code modified to work with Traquito Jetpack hardware, and a Raspberry Pi Pico, or Waveshare RP2040 LoRa board.  
+// A few of the changes were some pin definitions for the GPS and SI5351, and also forcing the GPS_NRESET_PIN HIGH. 
+
 #include <Arduino.h>
 #include <SPI.h>
 #include <Wire.h>
@@ -31,7 +34,7 @@
 
 #define Si5351Pwr     A3
 #define TCXO_Pwr      A4
-#define BattPin       A5
+#define BattPin       A3
 #define PTT_PIN       3
 #define GpsPwr        7
 #define Si446x_nIRQ   9
@@ -54,9 +57,9 @@
 
 #define SerialUSB   Serial
 
-#define Si5351Pwr     4
+#define Si5351Pwr     28 
 #define BattPin       A3
-#define GpsPwr        16
+#define GpsPwr        2
 
 //macros
 #define Si5351ON    
@@ -83,11 +86,11 @@
 
 #endif
 
-//#define DEVMODE // Development mode. Uncomment to enable for debugging.
+#define DEVMODE // Development mode. Uncomment to enable for debugging.
 //#define DEVMODE2// Development mode. Uncomment to enable for debugging.
 
 //******************************  APRS CONFIG **********************************
-char    CallSign[7]="NOCALL";//DO NOT FORGET TO CHANGE YOUR CALLSIGN
+char    CallSign[7]="NoCallsign";//DO NOT FORGET TO CHANGE YOUR CALLSIGN
 int8_t  CallNumber=11; //11; //SSID http://www.aprs.org/aprs11/SSIDs.txt
 char    Symbol='O'; // 'O' for balloon, '>' for car, for more info : http://www.aprs.org/symbols/symbols-new.txt
 bool    alternateSymbolTable = false ; //false = '/' , true = '\'
@@ -117,14 +120,14 @@ float     HighVolt=9.9; //GPS is always on if the voltage exceeds this value to 
 
 //******************************  HF (WSPR) CONFIG *************************************
 
-char hf_call[7] = "NOCALL";// DO NOT FORGET TO CHANGE YOUR CALLSIGN
+char hf_call[7] = "NoCallsign";// DO NOT FORGET TO CHANGE YOUR CALLSIGN
 
 //#define WSPR_DEFAULT_FREQ       10140200UL //30m band
-#define WSPR_DEFAULT_FREQ       14097100UL //20m band
+//#define WSPR_DEFAULT_FREQ       14097100UL //20m band
 //#define WSPR_DEFAULT_FREQ       18106100UL //17M band
 //#define WSPR_DEFAULT_FREQ       21096100UL //15m band
 //#define WSPR_DEFAULT_FREQ       24926100UL //12M band
-//#define WSPR_DEFAULT_FREQ       28126100UL //10m band
+#define WSPR_DEFAULT_FREQ       28126100UL //10m band
 //for all bands -> http://wsprnet.org/drupal/node/7352
 
 
@@ -222,7 +225,7 @@ Si5351 si5351(0x60);
 #endif
 TinyGPSPlus gps;
 #if defined(ARDUINO_ARCH_SAMD)
-Adafruit_BMP085 bmp;
+//Adafruit_BMP085 bmp;
 #endif
 JTEncode jtencode;
 #if defined(ARDUINO_ARCH_SAMD)
@@ -236,19 +239,19 @@ Adafruit_ZeroTimer zerotimer = Adafruit_ZeroTimer(3);
 #define WSPR_TX_CLK_NUM     1
 #define APRS_TX_CLK_NUM     0
 
-#define GPS_VCC_ON_N_PIN            16
-#define GPS_NRESET_PIN              5
-#define GPS_ON_PIN                  6
-#define GPS_UART1_TX_PIN            8
-#define GPS_UART1_RX_PIN            9
-#define GPS_1PPS_PIN                17
+#define GPS_VCC_ON_N_PIN            3  
+#define GPS_NRESET_PIN              6 
+#define GPS_ON_PIN                  2 
+#define GPS_UART1_TX_PIN            8 
+#define GPS_UART1_RX_PIN            9 
+//#define GPS_1PPS_PIN                17
 
-#define VFO_VDD_ON_N_PIN            4
-#define VFO_I2C0_SDA_PIN            12
-#define VFO_I2C0_SCL_PIN            13
+#define VFO_VDD_ON_N_PIN            28 
+#define VFO_I2C0_SDA_PIN            4 
+#define VFO_I2C0_SCL_PIN            5 
 
-#define BMP280_I2C1_SDA_PIN         2
-#define BMP280_I2C1_SCL_PIN         3
+//#define BMP280_I2C1_SDA_PIN         2 //commented out
+//#define BMP280_I2C1_SCL_PIN         3 // commented out
 
 #define PLL_CALCULATION_PRECISION   4
 
@@ -686,6 +689,8 @@ void setup() {
   setStatusLEDBlinkCount(LED_STATUS_NO_GPS);
   // pinMode(Si5351Pwr, OUTPUT);
   pinMode(GpsPwr, OUTPUT);
+  pinMode(GPS_NRESET_PIN, OUTPUT);  //added - needed for Waveshare/Raspberry Pi Pico
+  digitalWrite(GPS_NRESET_PIN, HIGH); //added - needed for Waveshare/Raspberry Pi Pico
   // pinMode(BattPin, INPUT);
   analogReadResolution(12);
 #endif
@@ -713,6 +718,9 @@ void setup() {
   Watchdog.reset(); 
 
   SerialUSB.println(F("Starting"));
+  printf("printf works");
+  SerialUSB.println("serialUSB print works");
+  Serial.println("Serial.println works too");
 
   APRS_init();
   APRS_setCallsign(CallSign, CallNumber);
@@ -752,6 +760,7 @@ void loop() {
   updateStatusLED();
 #endif
 
+
 if (((readBatt() > BattMin) && GpsFirstFix) || ((readBatt() > GpsMinVolt) && !GpsFirstFix)) {
 
     if (aliveStatus) {
@@ -771,15 +780,18 @@ if (((readBatt() > BattMin) && GpsFirstFix) || ((readBatt() > GpsMinVolt) && !Gp
         GpsInvalidTime=0;
         #if defined(ARDUINO_ARCH_RP2040)
         setStatusLEDBlinkCount(LED_STATUS_GPS_FIX);
+        SerialUSB.println(F("GPS_Fix"));
         #endif
       }else{
         GpsInvalidTime++;
         #if defined(ARDUINO_ARCH_RP2040)
         if (gps.date.year() != 2000) setStatusLEDBlinkCount(LED_STATUS_GPS_TIME);
         else setStatusLEDBlinkCount(LED_STATUS_NO_GPS);
+        SerialUSB.println(F("NO_GPS_Fix"));
         #endif
         if(GpsInvalidTime > GpsResetTime){
           GpsOFF; 
+          SerialUSB.println(F("GPS_Reset"));
           ublox_high_alt_mode_enabled = false; //gps sleep mode resets high altitude mode.
           Watchdog.reset();
           delay(1000);
@@ -1453,6 +1465,9 @@ float readBatt() {
   float solar_voltage = ((float)adc_val / 3.0f - 27.0f) / 412.0f;
   // if (solar_voltage < 0.0f) solar_voltage = 0.0f;
   // if (solar_voltage > 9.9f) solar_voltage = 9.9f;
+  //Serial.println(solar_voltage);
+  //solar_voltage = 4.90 ;  //spoof solar voltage
+  //Serial.println(solar_voltage);
   return solar_voltage;
 #endif
 }
