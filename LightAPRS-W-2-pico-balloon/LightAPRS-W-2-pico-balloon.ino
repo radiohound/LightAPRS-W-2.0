@@ -90,7 +90,7 @@
 //#define DEVMODE2// Development mode. Uncomment to enable for debugging.
 
 //******************************  APRS CONFIG **********************************
-char    CallSign[7]="NoCallsign";//DO NOT FORGET TO CHANGE YOUR CALLSIGN
+char    CallSign[7]="NOCALL";//DO NOT FORGET TO CHANGE YOUR CALLSIGN
 int8_t  CallNumber=11; //11; //SSID http://www.aprs.org/aprs11/SSIDs.txt
 char    Symbol='O'; // 'O' for balloon, '>' for car, for more info : http://www.aprs.org/symbols/symbols-new.txt
 bool    alternateSymbolTable = false ; //false = '/' , true = '\'
@@ -120,7 +120,7 @@ float     HighVolt=9.9; //GPS is always on if the voltage exceeds this value to 
 
 //******************************  HF (WSPR) CONFIG *************************************
 
-char hf_call[7] = "NoCallsign";// DO NOT FORGET TO CHANGE YOUR CALLSIGN
+char hf_call[7] = "NOCALL";// DO NOT FORGET TO CHANGE YOUR CALLSIGN
 
 //#define WSPR_DEFAULT_FREQ       10140200UL //30m band
 //#define WSPR_DEFAULT_FREQ       14097100UL //20m band
@@ -718,9 +718,6 @@ void setup() {
   Watchdog.reset(); 
 
   SerialUSB.println(F("Starting"));
-  printf("printf works");
-  SerialUSB.println("serialUSB print works");
-  Serial.println("Serial.println works too");
 
   APRS_init();
   APRS_setCallsign(CallSign, CallNumber);
@@ -1465,9 +1462,6 @@ float readBatt() {
   float solar_voltage = ((float)adc_val / 3.0f - 27.0f) / 412.0f;
   // if (solar_voltage < 0.0f) solar_voltage = 0.0f;
   // if (solar_voltage > 9.9f) solar_voltage = 9.9f;
-  //Serial.println(solar_voltage);
-  //solar_voltage = 4.90 ;  //spoof solar voltage
-  //Serial.println(solar_voltage);
   return solar_voltage;
 #endif
 }
