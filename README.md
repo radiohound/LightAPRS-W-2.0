@@ -1,6 +1,5 @@
 # This is an effort to modify Kazu's software to work with the Traquito Jetpack
-My end goal is to get it to work with Waveshare's LoRa RP2040 (a LoRa capable clone of the Raspberry Pi Pico RP2040 board), and to add LoRa APRS code. 
-Of course, this would be much easier if the Jetpack hardware had a schematic ...
+Currently the code is working on a Raspberry Pi Pico clone, Waveshare's RP2040 LoRa module, soldered to a Traquito Jetpack. The next step will be to add LoRa APRS transmissions.
 
 # LightAPRS-W-2.0 ported to sf-hab.org RP2040 based PicoBalloon Tracker PCB generation 1
 
