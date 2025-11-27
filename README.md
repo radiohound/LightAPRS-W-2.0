@@ -1,4 +1,4 @@
-# This is an effort to modify Kadzu's software to work with the Traquito Jetpack
+# This is an effort to modify Kazu's software to work with the Traquito Jetpack
 My end goal is to get it to work with Waveshare's LoRa RP2040 (a LoRa capable clone of the Raspberry Pi Pico RP2040 board), and to add LoRa APRS code. 
 Of course, this would be much easier if the Jetpack hardware had a schematic ...
 
